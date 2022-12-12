@@ -1,0 +1,6 @@
+NODE1 209.51.188.20
+NODE2 1234
+### <- This stands for the end of config
+
+ftp.gnu.org 209.51.188.20
+port = 1234
