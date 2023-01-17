@@ -42,7 +42,7 @@ private:
     void initThreads() {
         auto processFunc = [this](FrameType &frame) {
             if (frame.type == Config::FTP) {
-                // receive UDP
+                // receive FTP
                 fprintf(stderr, "receive FTP! %s:%u %s\n", IPType2Str(frame.ip).c_str(), frame.port, frame.body.c_str());
             }
         };

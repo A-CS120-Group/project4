@@ -1,4 +1,4 @@
-#include "../include/UDP.h"
+#include "../include/ftp.h"
 #include "../include/config.h"
 #include "../include/reader.h"
 #include "../include/utils.h"
@@ -32,39 +32,31 @@ public:
         Node2Button.onClick = nullptr;
         addAndMakeVisible(Node2Button);
 
+        ftp_t ftp("209.51.188.20", 21);
+        ftp.USER("anonymous");
+        ftp.PASS("  ");
+        // Must wait for log in
+        using namespace std::chrono_literals;
+        std::this_thread::sleep_for(3000ms);
+        ftp.PASV();
+        ftp.CWD("gnu");
+        ftp.LIST();
+        std::cout << "getting" << ftp.m_file_nslt.at(0) << std::endl;
+        ftp.RETR(ftp.m_file_nslt.at(0).c_str());
+        ftp.logout();
+
+
         setSize(600, 300);
         setAudioChannels(1, 1);
-
-        initSockets();
     }
 
     ~MainContentComponent() override {
         shutdownAudio();
-        destroySockets();
     }
 
 private:
-    void initThreads() {
-        auto processFunc = [this](const FrameType &frame) {
-            fprintf(stderr, "\t\tNAT from AtherNet to EtherNet\n");
-            if (frame.type == Config::UDP) UDP_socket->send(frame.body, IPType2Str(frame.ip), frame.port);
-        };
-        reader = new Reader(&directInput, &directInputLock, processFunc);
-        reader->startThread();
-        writer = new Writer(&directOutput, &directOutputLock);
-    }
-
-    void initSockets() {
-        fprintf(stderr, "\t\tNAT from EtherNet to AtherNet\n");
-        auto processUDP = [this](FrameType &frame) {// NAT
-            if (frame.type == Config::UDP) writer->send(frame);
-        };
-        UDP_socket = new UDP(globalConfig.get(Config::NODE1, Config::UDP).port, processUDP);
-        UDP_socket->startThread();
-    }
 
     void prepareToPlay([[maybe_unused]] int samplesPerBlockExpected, [[maybe_unused]] double sampleRate) override {
-        initThreads();
         AudioDeviceManager::AudioDeviceSetup currentAudioSetup;
         deviceManager.getAudioDeviceSetup(currentAudioSetup);
         currentAudioSetup.bufferSize = 144;// 144 160 192
@@ -108,8 +100,6 @@ private:
         delete writer;
     }
 
-    void destroySockets() { delete UDP_socket; }
-
 private:
     // AtherNet related
     Reader *reader{nullptr};
@@ -125,8 +115,7 @@ private:
     juce::TextButton Node2Button;
 
     // Ethernet related
-    GlobalConfig globalConfig{};
-    UDP *UDP_socket{nullptr};
+//    GlobalConfig globalConfig{};
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MainContentComponent)
 };

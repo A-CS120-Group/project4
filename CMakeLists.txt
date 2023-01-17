@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.23)
+cmake_minimum_required(VERSION 3.21)
 set(CMAKE_CXX_STANDARD 17)
 
 set(NODE1 "Node1")
@@ -47,4 +47,6 @@ setup(${NODE2})
 target_include_directories(${NODE1} PRIVATE Node1)
 target_include_directories(${NODE2} PRIVATE Node2)
 
+find_package(Boost COMPONENTS filesystem REQUIRED)
 include_directories(${Boost_INCLUDE_DIR})
+link_directories(${Boost_LIBRARY_DIR})
