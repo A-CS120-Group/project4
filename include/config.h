@@ -11,7 +11,7 @@
 class Config {
 public:
     enum Node { NODE1 = 1, NODE2 = 2 };
-    enum Type { FTP = 1 };
+    enum Type { FTP = 1, USER, PASS, PWD, CWD, PASV, LIST, RETR, BIN, BIN_END };
 
     std::string ip;
     int port;

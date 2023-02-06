@@ -20,17 +20,56 @@ public:
         titleLabel.setCentrePosition(300, 40);
         addAndMakeVisible(titleLabel);
 
-        Part2CK1.setButtonText("---");
-        Part2CK1.setSize(80, 40);
-        Part2CK1.setCentrePosition(150, 140);
-        Part2CK1.onClick = nullptr;
-        addAndMakeVisible(Part2CK1);
+        Part1.setButtonText("---");
+        Part1.setSize(80, 40);
+        Part1.setCentrePosition(150, 140);
+        Part1.onClick = [this]() {
+            auto conf = GlobalConfig().get(Config::NODE1);
+            /*
+             * USER string
+             * PASS string
+             * PWD void
+             * CWD string
+             * PASV void
+             * LIST void
+             * RETR string (+ return file)
+             */
+            std::string input;
+            while (true) {
+                std::cin >> input;
+                FTPParameter.clear();
+                TYPEType frameTypeID;
+                if (input == "USER") {
+                    frameTypeID = Config::USER;
+                    std::cin >> FTPParameter;
+                } else if (input == "PASS") {
+                    frameTypeID = Config::PASS;
+                    std::cin >> FTPParameter;
+                } else if (input == "PWD") {
+                    frameTypeID = Config::PWD;
+                } else if (input == "CWD") {
+                    frameTypeID = Config::CWD;
+                    std::cin >> FTPParameter;
+                } else if (input == "PASV") {
+                    frameTypeID = Config::PASV;
+                } else if (input == "LIST") {
+                    frameTypeID = Config::LIST;
+                } else if (input == "RETR") {
+                    frameTypeID = Config::RETR;
+                    std::cin >> FTPParameter;
+                } else
+                    continue;
+                FrameType frame{frameTypeID, Str2IPType(conf.ip), (PORTType) conf.port, FTPParameter};
+                writer->send(frame);
+            }
+        };
+        addAndMakeVisible(Part1);
 
-        Part3.setButtonText("---");
-        Part3.setSize(80, 40);
-        Part3.setCentrePosition(450, 140);
-        Part3.onClick = nullptr;
-        addAndMakeVisible(Part3);
+        Part2.setButtonText("---");
+        Part2.setSize(80, 40);
+        Part2.setCentrePosition(450, 140);
+        Part2.onClick = nullptr;
+        addAndMakeVisible(Part2);
 
         setSize(600, 300);
         setAudioChannels(1, 1);
@@ -41,9 +80,14 @@ public:
 private:
     void initThreads() {
         auto processFunc = [this](FrameType &frame) {
-            if (frame.type == Config::FTP) {
-                // receive FTP
-                fprintf(stderr, "receive FTP! %s:%u %s\n", IPType2Str(frame.ip).c_str(), frame.port, frame.body.c_str());
+            static std::ofstream fOut;
+            if (frame.type == Config::BIN || frame.type == Config::BIN_END) {
+                if (!fOut.is_open()) fOut.open(FTPParameter, std::ios::binary);
+                fOut << frame.body;
+                if (frame.type == Config::BIN_END) fOut.close();
+            } else {
+                // receive FTP message
+                fprintf(stderr, "%s\n", frame.body.c_str());
             }
         };
         reader = new Reader(&directInput, &directInputLock, processFunc);
@@ -107,8 +151,11 @@ private:
 
     // GUI related
     juce::Label titleLabel;
-    juce::TextButton Part2CK1;
-    juce::TextButton Part3;
+    juce::TextButton Part1;
+    juce::TextButton Part2;
+
+    // FTP related
+    std::string FTPParameter;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MainContentComponent)
 };
